@@ -122,26 +122,54 @@
 
     <!-- 結果 -->
     <section id="result-section" class="hidden">
-        <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-10 text-center mb-6">
-            <h2 class="text-gray-500 font-medium mb-2">測驗結果</h2>
-            <div class="mb-4">
+        <!-- 頂部色條：完整測驗=藍，錯題重做=紅，由 JS 動態套用 -->
+        <div id="result-card" class="bg-white rounded-2xl shadow-sm border border-blue-200 p-0 mb-6 overflow-hidden" style="border-top: 4px solid #378ADD;">
+
+            <!-- 模式 Banner -->
+            <div id="result-mode-banner" class="px-6 pt-5 pb-4 text-left" style="background: #E6F1FB;">
+                <div class="flex items-center gap-3">
+                    <span id="result-mode-icon" class="text-2xl">📋</span>
+                    <div>
+                        <p id="result-mode-label" class="text-base font-bold" style="color:#185FA5;">完整測驗</p>
+                        <p id="result-mode-sub" class="text-sm mt-0.5" style="color:#378ADD;"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 姓名 / 學號 -->
+            <div class="text-center px-6 pt-5 pb-2">
                 <span id="result-name" class="text-4xl font-bold text-gray-800 block mb-1">-</span>
                 <span id="result-id" class="text-lg text-gray-500">-</span>
             </div>
-            <div class="flex flex-wrap justify-center gap-2 mb-6">
-                <span id="tag-mode-top" class="bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-medium border border-blue-200"></span>
-                <span id="tag-attempt" class="bg-pink-100 text-pink-800 px-4 py-1.5 rounded-full text-sm font-medium border border-pink-200"></span>
+
+            <!-- 大分數 -->
+            <div class="text-center px-6 pb-2">
+                <div class="text-8xl font-bold mb-1" id="result-score" style="color:#185FA5;">0</div>
+                <p id="result-score-label" class="text-sm font-medium mb-2" style="color:#378ADD;">完整測驗分數</p>
             </div>
-            <div class="text-7xl font-bold text-sky-500 mb-4" id="result-score">0</div>
-            <div class="flex justify-center space-x-8 mb-6 text-gray-600">
-                <div>答對：<span id="result-correct" class="font-bold text-green-500 text-xl">0</span> 題</div>
-                <div>答錯：<span id="result-wrong" class="font-bold text-red-500 text-xl">0</span> 題</div>
+
+            <!-- 答對 / 答錯 -->
+            <div class="flex justify-center space-x-8 mb-4 text-gray-600 px-6">
+                <div class="text-center">
+                    <span id="result-correct" class="font-bold text-green-500 text-3xl block">0</span>
+                    <span class="text-xs text-gray-400">答對題數</span>
+                </div>
+                <div class="text-center">
+                    <span id="result-wrong" class="font-bold text-red-500 text-3xl block">0</span>
+                    <span class="text-xs text-gray-400">答錯題數</span>
+                </div>
             </div>
-            <p id="result-message" class="text-xl font-medium text-pink-600 mb-8"></p>
-            <p id="save-status" class="text-sm text-blue-600 mb-4 font-medium"></p>
-            <div class="flex flex-col gap-3 justify-center mt-8 max-w-sm mx-auto">
+
+            <!-- 鼓勵訊息 & 同步狀態 -->
+            <div class="text-center px-6 pb-2">
+                <p id="result-message" class="text-lg font-medium text-pink-600 mb-3"></p>
+                <p id="save-status" class="text-sm text-blue-600 mb-2 font-medium"></p>
+            </div>
+
+            <!-- 按鈕區 -->
+            <div class="flex flex-col gap-3 justify-center px-6 pb-6 max-w-sm mx-auto">
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="btn-retry" onclick="startRetry()" class="hidden flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-md shadow-rose-200">錯題重做</button>
+                    <button id="btn-retry" onclick="startRetry()" class="hidden flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-md shadow-rose-200">🔄 錯題重做</button>
                     <button onclick="startFullQuiz(currentSelectedTopic)" class="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-md shadow-sky-200">重新完整測驗</button>
                 </div>
                 <button onclick="backToTopics()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 px-6 rounded-xl transition">回單元列表</button>
@@ -615,8 +643,43 @@ function showResults(scoreCorrect) {
     document.getElementById("result-score").textContent   = scoreCalc;
     document.getElementById("result-correct").textContent = scoreCorrect;
     document.getElementById("result-wrong").textContent   = wrong;
-    document.getElementById("tag-mode-top").textContent   = `${isRetryMode?"錯題重做":"完整測驗"} — ${currentSelectedTopic}`;
-    document.getElementById("tag-attempt").textContent    = `第 ${attemptCount} 次測驗`;
+
+    // ★ 根據模式套用不同視覺主題
+    const card        = document.getElementById("result-card");
+    const banner      = document.getElementById("result-mode-banner");
+    const modeIcon    = document.getElementById("result-mode-icon");
+    const modeLabel   = document.getElementById("result-mode-label");
+    const modeSub     = document.getElementById("result-mode-sub");
+    const scoreEl     = document.getElementById("result-score");
+    const scoreLabel  = document.getElementById("result-score-label");
+
+    if (isRetryMode) {
+        // 紅色主題：錯題重做
+        card.style.borderTop    = "4px solid #E24B4A";
+        card.style.borderColor  = "#F7C1C1";
+        banner.style.background = "#FCEBEB";
+        modeIcon.textContent    = "🔄";
+        modeLabel.textContent   = "錯題重做";
+        modeLabel.style.color   = "#A32D2D";
+        modeSub.textContent     = `${currentSelectedTopic} · 第 ${attemptCount} 次 · 共 ${total} 題錯題`;
+        modeSub.style.color     = "#E24B4A";
+        scoreEl.style.color     = "#E24B4A";
+        scoreLabel.textContent  = `錯題答對率（${scoreCorrect}／${total}）`;
+        scoreLabel.style.color  = "#A32D2D";
+    } else {
+        // 藍色主題：完整測驗
+        card.style.borderTop    = "4px solid #378ADD";
+        card.style.borderColor  = "#B5D4F4";
+        banner.style.background = "#E6F1FB";
+        modeIcon.textContent    = "📋";
+        modeLabel.textContent   = "完整測驗";
+        modeLabel.style.color   = "#185FA5";
+        modeSub.textContent     = `${currentSelectedTopic} · 第 ${attemptCount} 次`;
+        modeSub.style.color     = "#378ADD";
+        scoreEl.style.color     = "#185FA5";
+        scoreLabel.textContent  = "完整測驗分數";
+        scoreLabel.style.color  = "#378ADD";
+    }
 
     showResultMessage(scoreCalc);
 
