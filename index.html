@@ -686,13 +686,22 @@ function renderReviewList() {
         });
         optsHtml += "</div>";
 
+        // ★ 圖片題：解析區也顯示圖片
+        const imgHtml = (q.isImage && q.imgUrl)
+            ? `<img src="${q.imgUrl}" alt="題目圖片"
+                class="w-full max-w-xl mx-auto rounded-xl border border-gray-200 shadow-sm mt-2 mb-4 block"
+                style="max-height:320px;object-fit:contain;"
+                onerror="this.style.display='none'">`
+            : "";
+
         const div = document.createElement("div");
         div.className = isOk ? "bg-green-50 p-5 rounded-xl border border-green-200" : "bg-red-50 p-5 rounded-xl border border-red-200";
         div.innerHTML = `
             <div class="font-bold text-lg mb-3 pb-2 border-b ${isOk?'text-green-600 border-green-200':'text-red-500 border-red-200'}">
                 ${isOk ? '✅ 答對' : '❌ 答錯'}
             </div>
-            <div class="font-bold text-gray-800 text-lg mb-3"><span class="text-gray-400 text-sm mr-1">Q${idx+1}.</span>${q.q}</div>
+            <div class="font-bold text-gray-800 text-lg mb-1"><span class="text-gray-400 text-sm mr-1">Q${idx+1}.</span>${q.q}</div>
+            ${imgHtml}
             ${optsHtml}
             <div class="text-gray-700 text-sm md:text-base leading-relaxed bg-white/60 p-4 rounded-lg shadow-sm">
                 <span class="font-bold text-blue-600">💡 解析：</span>${q.serverExp}
