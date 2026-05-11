@@ -432,7 +432,7 @@ async function fetchQuestionBank() {
         const res    = await fetch(GAS_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const result = await res.json();
-        if (result.status !== "success" || !result.data?.length)
+        if (result.status !== "success" || !result.topics?.length)
             throw new Error("題庫回傳格式不正確，或題庫為空");
 
         document.getElementById("main-title").textContent = result.title || "動態題庫測驗";
