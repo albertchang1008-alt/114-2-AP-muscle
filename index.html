@@ -25,6 +25,18 @@
         .student-row{cursor:pointer;transition:background 0.15s;}
         .student-row:hover{background:#f0f9ff;}
 
+        /* 閃卡樣式 */
+        .flashcard-scene{perspective:1000px;width:100%;min-height:280px;cursor:pointer;}
+        .flashcard-inner{position:relative;width:100%;min-height:280px;
+            transition:transform 0.55s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d;}
+        .flashcard-scene.flipped .flashcard-inner{transform:rotateY(180deg);}
+        .flashcard-face{position:absolute;width:100%;min-height:280px;
+            backface-visibility:hidden;-webkit-backface-visibility:hidden;
+            border-radius:1.25rem;padding:2rem;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;}
+        .flashcard-front{background:white;border:2px solid #e0f2fe;}
+        .flashcard-back{background:#f0f9ff;border:2px solid #0ea5e9;transform:rotateY(180deg);}
+
         /* 管理人登入 modal */
         #admin-modal{display:none;}
         #admin-modal.open{display:flex;}
@@ -111,6 +123,87 @@
         </div>
     </section>
 
+    <!-- 閃卡載入中 -->
+    <section id="flashcard-loading-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-10 mx-auto max-w-md text-center">
+        <div class="flex justify-center mb-4"><div class="loader" style="border-top-color:#0ea5e9;"></div></div>
+        <h2 class="text-lg font-semibold text-gray-700">正在載入閃卡...</h2>
+    </section>
+
+    <!-- 閃卡模式 -->
+    <section id="flashcard-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-8">
+        <div class="flex justify-between items-center mb-5 border-b pb-4">
+            <div>
+                <h3 id="fc-topic-title" class="text-lg font-semibold text-pink-600">閃卡複習</h3>
+                <p class="text-xs text-gray-400 mt-0.5">選擇答案後翻牌查看解析</p>
+            </div>
+            <span id="fc-progress" class="bg-pink-100 text-pink-800 text-sm font-medium px-3 py-1 rounded-full">1 / X</span>
+        </div>
+
+        <!-- 進度條 -->
+        <div class="flex items-center gap-3 mb-5">
+            <span class="text-xs text-green-600 font-medium w-14 text-right" id="fc-known-count">✅ 0</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div id="fc-progress-bar" class="bg-green-400 h-2.5 rounded-full transition-all duration-500" style="width:0%"></div>
+            </div>
+            <span class="text-xs text-red-400 font-medium w-14" id="fc-unknown-count">❌ 0 待學</span>
+        </div>
+
+        <!-- ★ 正面：題目 + 選項（不用翻轉卡片，直接呈現） -->
+        <div id="fc-front" class="mb-5">
+            <!-- 圖片 -->
+            <div id="fc-img-area" class="hidden mb-4">
+                <img id="fc-img" src="" alt="題目圖片"
+                    class="max-w-full max-h-64 mx-auto rounded-xl border border-gray-200 object-contain shadow-sm">
+            </div>
+            <!-- 題目 -->
+            <p id="fc-question" class="text-lg md:text-xl font-semibold text-gray-800 leading-relaxed mb-5"></p>
+            <!-- 選項 -->
+            <div id="fc-options" class="space-y-3"></div>
+        </div>
+
+        <!-- ★ 背面：對錯結果 + 答案 + 解析（選完後顯示） -->
+        <div id="fc-back" class="hidden">
+            <!-- 對錯橫幅 -->
+            <div id="fc-result-banner" class="rounded-xl p-4 mb-4 text-center font-bold text-lg"></div>
+            <!-- 正確答案 -->
+            <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 mb-3">
+                <p class="text-xs text-sky-500 font-semibold mb-1 uppercase tracking-wider">正確答案</p>
+                <p id="fc-answer" class="text-sky-700 font-bold text-lg leading-snug"></p>
+            </div>
+            <!-- 解析 -->
+            <div id="fc-exp-wrap" class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5 hidden">
+                <p class="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">💡 解析</p>
+                <p id="fc-exp" class="text-gray-700 text-sm leading-relaxed"></p>
+            </div>
+            <!-- 下一張按鈕 -->
+            <div class="flex gap-3 justify-center">
+                <button onclick="fcNext(false)"
+                    class="flex-1 max-w-xs bg-red-50 hover:bg-red-100 border-2 border-red-200 text-red-600 font-bold py-4 rounded-2xl transition text-base">
+                    ❌ 再複習一次
+                </button>
+                <button onclick="fcNext(true)"
+                    class="flex-1 max-w-xs bg-green-50 hover:bg-green-100 border-2 border-green-200 text-green-600 font-bold py-4 rounded-2xl transition text-base">
+                    ✅ 已掌握
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <button onclick="backToTopics()" class="text-xs text-gray-300 hover:text-gray-400 transition">離開閃卡</button>
+        </div>
+    </section>
+
+    <!-- 閃卡完成 -->
+    <section id="flashcard-done-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-10 text-center">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">複習完成！</h2>
+        <p id="fc-done-msg" class="text-gray-500 mb-8"></p>
+        <div class="flex flex-col gap-3 max-w-xs mx-auto">
+            <button onclick="restartFlashcard()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-3.5 rounded-xl transition">🔄 重新複習全部</button>
+            <button onclick="backToTopics()"     class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-xl transition">回單元列表</button>
+        </div>
+    </section>
+
     <!-- 送出中 -->
     <section id="submitting-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-10 mx-auto max-w-md text-center">
         <div class="flex justify-center mb-4">
@@ -122,54 +215,26 @@
 
     <!-- 結果 -->
     <section id="result-section" class="hidden">
-        <!-- 頂部色條：完整測驗=藍，錯題重做=紅，由 JS 動態套用 -->
-        <div id="result-card" class="bg-white rounded-2xl shadow-sm border border-blue-200 p-0 mb-6 overflow-hidden" style="border-top: 4px solid #378ADD;">
-
-            <!-- 模式 Banner -->
-            <div id="result-mode-banner" class="px-6 pt-5 pb-4 text-left" style="background: #E6F1FB;">
-                <div class="flex items-center gap-3">
-                    <span id="result-mode-icon" class="text-2xl">📋</span>
-                    <div>
-                        <p id="result-mode-label" class="text-base font-bold" style="color:#185FA5;">完整測驗</p>
-                        <p id="result-mode-sub" class="text-sm mt-0.5" style="color:#378ADD;"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 姓名 / 學號 -->
-            <div class="text-center px-6 pt-5 pb-2">
+        <div class="bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-10 text-center mb-6">
+            <h2 class="text-gray-500 font-medium mb-2">測驗結果</h2>
+            <div class="mb-4">
                 <span id="result-name" class="text-4xl font-bold text-gray-800 block mb-1">-</span>
                 <span id="result-id" class="text-lg text-gray-500">-</span>
             </div>
-
-            <!-- 大分數 -->
-            <div class="text-center px-6 pb-2">
-                <div class="text-8xl font-bold mb-1" id="result-score" style="color:#185FA5;">0</div>
-                <p id="result-score-label" class="text-sm font-medium mb-2" style="color:#378ADD;">完整測驗分數</p>
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <span id="tag-mode-top" class="bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-medium border border-blue-200"></span>
+                <span id="tag-attempt" class="bg-pink-100 text-pink-800 px-4 py-1.5 rounded-full text-sm font-medium border border-pink-200"></span>
             </div>
-
-            <!-- 答對 / 答錯 -->
-            <div class="flex justify-center space-x-8 mb-4 text-gray-600 px-6">
-                <div class="text-center">
-                    <span id="result-correct" class="font-bold text-green-500 text-3xl block">0</span>
-                    <span class="text-xs text-gray-400">答對題數</span>
-                </div>
-                <div class="text-center">
-                    <span id="result-wrong" class="font-bold text-red-500 text-3xl block">0</span>
-                    <span class="text-xs text-gray-400">答錯題數</span>
-                </div>
+            <div class="text-7xl font-bold text-sky-500 mb-4" id="result-score">0</div>
+            <div class="flex justify-center space-x-8 mb-6 text-gray-600">
+                <div>答對：<span id="result-correct" class="font-bold text-green-500 text-xl">0</span> 題</div>
+                <div>答錯：<span id="result-wrong" class="font-bold text-red-500 text-xl">0</span> 題</div>
             </div>
-
-            <!-- 鼓勵訊息 & 同步狀態 -->
-            <div class="text-center px-6 pb-2">
-                <p id="result-message" class="text-lg font-medium text-pink-600 mb-3"></p>
-                <p id="save-status" class="text-sm text-blue-600 mb-2 font-medium"></p>
-            </div>
-
-            <!-- 按鈕區 -->
-            <div class="flex flex-col gap-3 justify-center px-6 pb-6 max-w-sm mx-auto">
+            <p id="result-message" class="text-xl font-medium text-pink-600 mb-8"></p>
+            <p id="save-status" class="text-sm text-blue-600 mb-4 font-medium"></p>
+            <div class="flex flex-col gap-3 justify-center mt-8 max-w-sm mx-auto">
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="btn-retry" onclick="startRetry()" class="hidden flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-md shadow-rose-200">🔄 錯題重做</button>
+                    <button id="btn-retry" onclick="startRetry()" class="hidden flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-md shadow-rose-200">錯題重做</button>
                     <button onclick="startFullQuiz(currentSelectedTopic)" class="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-md shadow-sky-200">重新完整測驗</button>
                 </div>
                 <button onclick="backToTopics()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 px-6 rounded-xl transition">回單元列表</button>
@@ -336,10 +401,11 @@
 <!-- ══════════════════════════════════════════ -->
 <script>
 // ★ 將此 URL 換成你的 GAS Webapp URL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzeSGvkiCgYggXCb-mhRKDygMLOcKouTXqqwCroKOvO3rfbSWzoFMQJzmp0nBx76XW4/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby7udVu2rlhQYo1IwBKym8HDAdlgKIc8n4PasSJD_j9RtPsTuDoy0gm1j0xkikPKDPYdw/exec';
 
 // ── 系統狀態 ──
 let allQuestionsData   = [];
+let topicsData         = [];   // ★ 分類清單（doGet 回傳）
 let studentHashes      = [];   // ★ 從 GAS 載入的雜湊名單，本地比對用（不含原始學號姓名）
 let studentName        = "";
 let studentId          = "";
@@ -391,18 +457,8 @@ async function fetchQuestionBank() {
         // ★ 儲存雜湊名單供登入時本地比對（原始學號姓名不在前端）
         studentHashes = result.studentHashes || [];
 
-        // ★ 只儲存題目與選項，不含答案
-        allQuestionsData = result.data
-            .filter(item => item.q && item.options?.length)
-            .map((item, idx) => ({
-                id:      item.id || `Q_${idx}`,
-                top:     item.top || "未分類",
-                q:       item.q,
-                options: item.options,
-                color:   item.color || "red",
-                isImage: item.isImage || false,  // ★
-                imgUrl:  item.imgUrl  || "",       // ★
-            }));
+        // ★ 只儲存分類清單，題目內容待進入分類後再載入
+        topicsData = result.topics || [];
 
         hide("loading-section");
         show("login-section");
@@ -451,47 +507,116 @@ function handleLogin() {
 function renderTopics() {
     const div = document.getElementById("topic-list");
     div.innerHTML = "";
-    const topicMap = new Map();
-    allQuestionsData.forEach(q => { if (!topicMap.has(q.top)) topicMap.set(q.top, q.color || "red"); });
 
     const cls = (c) => {
         const s = String(c||"").toLowerCase();
-        if (s.includes("粉")||s.includes("pink"))   return "border-pink-100 hover:border-pink-300 hover:bg-pink-50 text-pink-700";
-        if (s.includes("藍")||s.includes("blue")||s.includes("sky")) return "border-blue-100 hover:border-blue-300 hover:bg-blue-50 text-blue-700";
-        if (s.includes("綠")||s.includes("green"))  return "border-green-100 hover:border-green-300 hover:bg-green-50 text-green-700";
-        if (s.includes("橘")||s.includes("orange")) return "border-orange-100 hover:border-orange-300 hover:bg-orange-50 text-orange-700";
-        if (s.includes("紫")||s.includes("purple")) return "border-purple-100 hover:border-purple-300 hover:bg-purple-50 text-purple-700";
-        if (s.includes("黃")||s.includes("yellow")) return "border-yellow-100 hover:border-yellow-300 hover:bg-yellow-50 text-yellow-700";
-        return "border-red-100 hover:border-red-300 hover:bg-red-50 text-red-700";
+        if (s.includes("粉")||s.includes("pink"))   return { border:"border-pink-200",   hover:"hover:bg-pink-50",   text:"text-pink-700",   fc:"text-pink-400",   fcBorder:"border-t-pink-100" };
+        if (s.includes("藍")||s.includes("blue")||s.includes("sky")) return { border:"border-blue-200",  hover:"hover:bg-blue-50",   text:"text-blue-700",   fc:"text-blue-400",   fcBorder:"border-t-blue-100" };
+        if (s.includes("綠")||s.includes("green"))  return { border:"border-green-200",  hover:"hover:bg-green-50",  text:"text-green-700",  fc:"text-green-400",  fcBorder:"border-t-green-100" };
+        if (s.includes("橘")||s.includes("orange")) return { border:"border-orange-200", hover:"hover:bg-orange-50", text:"text-orange-700", fc:"text-orange-400", fcBorder:"border-t-orange-100" };
+        if (s.includes("紫")||s.includes("purple")) return { border:"border-purple-200", hover:"hover:bg-purple-50", text:"text-purple-700", fc:"text-purple-400", fcBorder:"border-t-purple-100" };
+        if (s.includes("黃")||s.includes("yellow")) return { border:"border-yellow-200", hover:"hover:bg-yellow-50", text:"text-yellow-700", fc:"text-yellow-400", fcBorder:"border-t-yellow-100" };
+        return { border:"border-red-200", hover:"hover:bg-red-50", text:"text-red-700", fc:"text-red-400", fcBorder:"border-t-red-100" };
     };
-    topicMap.forEach((color, topic) => {
-        const btn = document.createElement("button");
-        btn.className = `text-left bg-white border-2 p-4 rounded-xl shadow-sm transition font-medium ${cls(color)}`;
-        btn.textContent = topic;
-        btn.onclick = () => startFullQuiz(topic);
-        div.appendChild(btn);
+
+    // ★ 從 topicsData 渲染（doGet 只回傳分類清單）
+    topicsData.forEach(({ name: topic, color }) => {
+        const c = cls(color);
+        const wrapper = document.createElement("div");
+        wrapper.className = `bg-white border-2 ${c.border} rounded-xl shadow-sm overflow-hidden`;
+
+        // 測驗按鈕
+        const quizBtn = document.createElement("button");
+        quizBtn.className = `w-full text-left px-4 py-3.5 font-medium ${c.text} ${c.hover} transition`;
+        quizBtn.textContent = topic;
+        quizBtn.onclick = () => loadAndStartQuiz(topic);
+
+        // 閃卡按鈕
+        const fcBtn = document.createElement("button");
+        fcBtn.className = `w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold border-t ${c.fcBorder} ${c.fc} ${c.hover} transition`;
+        fcBtn.innerHTML = `🃏 閃卡複習`;
+        fcBtn.onclick = (e) => { e.stopPropagation(); loadAndStartFlashcard(topic); };
+
+        wrapper.appendChild(quizBtn);
+        wrapper.appendChild(fcBtn);
+        div.appendChild(wrapper);
     });
 
-    const all = document.createElement("button");
-    all.className = "md:col-span-2 text-center bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 p-4 rounded-xl shadow-sm transition text-blue-700 font-bold text-lg mt-2";
-    all.innerHTML = "🏆 綜合練習 <span class='text-sm font-normal text-blue-600 block mt-1'>打亂所有章節，隨機抽取 30 題</span>";
-    all.onclick = () => startFullQuiz("綜合練習");
-    div.appendChild(all);
+    const allWrapper = document.createElement("div");
+    allWrapper.className = "md:col-span-2 mt-2";
+    const allBtn = document.createElement("button");
+    allBtn.className = "w-full text-center bg-blue-50 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 p-4 rounded-xl shadow-sm transition text-blue-700 font-bold text-lg";
+    allBtn.innerHTML = "🏆 綜合練習 <span class='text-sm font-normal text-blue-600 block mt-1'>打亂所有章節，隨機抽取 30 題</span>";
+    allBtn.onclick = () => loadAndStartQuiz("綜合練習");
+    allWrapper.appendChild(allBtn);
+    div.appendChild(allWrapper);
 }
 
 // ══════════════════════════════════════════════
-//  4. 開始測驗（純前端答題，無網路延遲）
+//  4. 開始測驗（按需載入 + 純前端答題）
 // ══════════════════════════════════════════════
-function startFullQuiz(topic) {
+
+// ★ 按需載入指定分類題目，再開始測驗
+async function loadAndStartQuiz(topic) {
     currentSelectedTopic = topic;
     isRetryMode = false;
     attemptCount++;
-    let qs = topic === "綜合練習"
-        ? shuffle([...allQuestionsData]).slice(0, 30)
-        : allQuestionsData.filter(q => q.top === topic);
-    if (!qs.length) { alert("該分類下目前沒有題目！"); return; }
-    prepareQuiz(qs);
+    hide("topic-section");
+    // 顯示載入中（借用 submitting-section）
+    document.querySelector("#submitting-section h2").textContent = "正在載入題目...";
+    document.querySelector("#submitting-section p").textContent  = "請稍候";
+    show("submitting-section");
+    try {
+        await loadTopicQuestions(topic, false);
+        hide("submitting-section");
+        if (!allQuestionsData.length) { show("topic-section"); alert("該分類下目前沒有題目！"); return; }
+        prepareQuiz(allQuestionsData);
+    } catch(e) {
+        hide("submitting-section");
+        show("topic-section");
+        alert("載入失敗：" + e.message);
+    }
 }
+
+// ★ 按需載入指定分類題目，再開始閃卡
+async function loadAndStartFlashcard(topic) {
+    currentSelectedTopic = topic;
+    hide("topic-section");
+    show("flashcard-loading-section");
+    try {
+        await loadTopicQuestions(topic, true); // flashcard=true 回傳答案
+        hide("flashcard-loading-section");
+        if (!allQuestionsData.length) { show("topic-section"); alert("該分類下目前沒有題目！"); return; }
+        startFlashcard(allQuestionsData, topic);
+    } catch(e) {
+        hide("flashcard-loading-section");
+        show("topic-section");
+        alert("載入失敗：" + e.message);
+    }
+}
+
+// ★ 向 GAS 請求指定分類題目
+async function loadTopicQuestions(topic, flashcard) {
+    const res = await postGAS({ action: "getTopicQuestions", topic, flashcard: flashcard || false });
+    if (res.status !== "ok") throw new Error(res.message || "載入失敗");
+
+    let data = res.data || [];
+    if (topic === "綜合練習") data = shuffle([...data]).slice(0, 30);
+
+    allQuestionsData = data.map((item, idx) => ({
+        id:      item.id      || `Q_${idx}`,
+        top:     item.top     || "未分類",
+        q:       item.q,
+        options: item.options || [],
+        color:   item.color   || "red",
+        isImage: item.isImage || false,
+        imgUrl:  item.imgUrl  || "",
+        ans:     item.ans     || "", // 閃卡才有
+        exp:     item.exp     || "", // 閃卡才有
+    }));
+}
+
+function startFullQuiz(topic) { loadAndStartQuiz(topic); } // 相容舊呼叫
 
 function startRetry() {
     isRetryMode = true;
@@ -643,43 +768,8 @@ function showResults(scoreCorrect) {
     document.getElementById("result-score").textContent   = scoreCalc;
     document.getElementById("result-correct").textContent = scoreCorrect;
     document.getElementById("result-wrong").textContent   = wrong;
-
-    // ★ 根據模式套用不同視覺主題
-    const card        = document.getElementById("result-card");
-    const banner      = document.getElementById("result-mode-banner");
-    const modeIcon    = document.getElementById("result-mode-icon");
-    const modeLabel   = document.getElementById("result-mode-label");
-    const modeSub     = document.getElementById("result-mode-sub");
-    const scoreEl     = document.getElementById("result-score");
-    const scoreLabel  = document.getElementById("result-score-label");
-
-    if (isRetryMode) {
-        // 紅色主題：錯題重做
-        card.style.borderTop    = "4px solid #E24B4A";
-        card.style.borderColor  = "#F7C1C1";
-        banner.style.background = "#FCEBEB";
-        modeIcon.textContent    = "🔄";
-        modeLabel.textContent   = "錯題重做";
-        modeLabel.style.color   = "#A32D2D";
-        modeSub.textContent     = `${currentSelectedTopic} · 第 ${attemptCount} 次 · 共 ${total} 題錯題`;
-        modeSub.style.color     = "#E24B4A";
-        scoreEl.style.color     = "#E24B4A";
-        scoreLabel.textContent  = `錯題答對率（${scoreCorrect}／${total}）`;
-        scoreLabel.style.color  = "#A32D2D";
-    } else {
-        // 藍色主題：完整測驗
-        card.style.borderTop    = "4px solid #378ADD";
-        card.style.borderColor  = "#B5D4F4";
-        banner.style.background = "#E6F1FB";
-        modeIcon.textContent    = "📋";
-        modeLabel.textContent   = "完整測驗";
-        modeLabel.style.color   = "#185FA5";
-        modeSub.textContent     = `${currentSelectedTopic} · 第 ${attemptCount} 次`;
-        modeSub.style.color     = "#378ADD";
-        scoreEl.style.color     = "#185FA5";
-        scoreLabel.textContent  = "完整測驗分數";
-        scoreLabel.style.color  = "#378ADD";
-    }
+    document.getElementById("tag-mode-top").textContent   = `${isRetryMode?"錯題重做":"完整測驗"} — ${currentSelectedTopic}`;
+    document.getElementById("tag-attempt").textContent    = `第 ${attemptCount} 次測驗`;
 
     showResultMessage(scoreCalc);
 
@@ -749,22 +839,13 @@ function renderReviewList() {
         });
         optsHtml += "</div>";
 
-        // ★ 圖片題：解析區也顯示圖片
-        const imgHtml = (q.isImage && q.imgUrl)
-            ? `<img src="${q.imgUrl}" alt="題目圖片"
-                class="w-full max-w-xl mx-auto rounded-xl border border-gray-200 shadow-sm mt-2 mb-4 block"
-                style="max-height:320px;object-fit:contain;"
-                onerror="this.style.display='none'">`
-            : "";
-
         const div = document.createElement("div");
         div.className = isOk ? "bg-green-50 p-5 rounded-xl border border-green-200" : "bg-red-50 p-5 rounded-xl border border-red-200";
         div.innerHTML = `
             <div class="font-bold text-lg mb-3 pb-2 border-b ${isOk?'text-green-600 border-green-200':'text-red-500 border-red-200'}">
                 ${isOk ? '✅ 答對' : '❌ 答錯'}
             </div>
-            <div class="font-bold text-gray-800 text-lg mb-1"><span class="text-gray-400 text-sm mr-1">Q${idx+1}.</span>${q.q}</div>
-            ${imgHtml}
+            <div class="font-bold text-gray-800 text-lg mb-3"><span class="text-gray-400 text-sm mr-1">Q${idx+1}.</span>${q.q}</div>
             ${optsHtml}
             <div class="text-gray-700 text-sm md:text-base leading-relaxed bg-white/60 p-4 rounded-lg shadow-sm">
                 <span class="font-bold text-blue-600">💡 解析：</span>${q.serverExp}
@@ -774,8 +855,152 @@ function renderReviewList() {
     });
 }
 
+// ══════════════════════════════════════════════
+//  閃卡模式
+// ══════════════════════════════════════════════
+let fcDeck        = [];
+let fcKnown       = [];
+let fcCurrentCard = null;
+
+function startFlashcard(questions, topic) {
+    fcDeck  = shuffle(questions.map(q => ({ ...q })));
+    fcKnown = [];
+    hide("topic-section"); hide("result-section");
+    show("flashcard-section");
+    document.getElementById("fc-topic-title").textContent = `🃏 ${topic}`;
+    renderFlashcard();
+}
+
+function renderFlashcard() {
+    if (fcDeck.length === 0) { showFlashcardDone(); return; }
+
+    fcCurrentCard = fcDeck[0];
+    const q = fcCurrentCard;
+
+    // 重置：顯示正面，隱藏背面
+    show("fc-front"); hide("fc-back");
+
+    // 進度
+    const total = fcDeck.length + fcKnown.length;
+    const known = fcKnown.length;
+    const pct   = total > 0 ? Math.round((known / total) * 100) : 0;
+    document.getElementById("fc-progress").textContent      = `${known} / ${total}`;
+    document.getElementById("fc-known-count").textContent   = `✅ ${known}`;
+    document.getElementById("fc-unknown-count").textContent = `❌ ${fcDeck.length} 待學`;
+    document.getElementById("fc-progress-bar").style.width  = pct + "%";
+
+    // 圖片
+    const imgArea = document.getElementById("fc-img-area");
+    const imgEl   = document.getElementById("fc-img");
+    if (q.isImage && q.imgUrl) {
+        imgArea.classList.remove("hidden"); imgEl.src = q.imgUrl;
+    } else {
+        imgArea.classList.add("hidden"); imgEl.src = "";
+    }
+
+    // 題目
+    document.getElementById("fc-question").textContent = q.q;
+
+    // ★ 選項按鈕（洗牌後渲染）
+    const optContainer = document.getElementById("fc-options");
+    optContainer.innerHTML = "";
+    const shuffledOpts = shuffle([...q.options]);
+    shuffledOpts.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "fc-opt-btn w-full text-left bg-gray-50 border border-gray-200 hover:bg-sky-50 hover:border-sky-300 text-gray-700 font-medium rounded-xl px-4 py-3 transition text-sm";
+        btn.textContent = opt;
+        btn.dataset.opt = opt;
+        btn.onclick = () => fcSelectOption(btn, opt, q);
+        optContainer.appendChild(btn);
+    });
+}
+
+function fcSelectOption(clickedBtn, selectedOpt, q) {
+    // 鎖定所有選項
+    document.querySelectorAll(".fc-opt-btn").forEach(b => { b.onclick = null; });
+
+    const cleanSel  = selectedOpt.replace(/^([1-4]|[A-D])[.\-、\s]*/i,"").trim().toLowerCase();
+    const cleanCorr = (q.ans||"").replace(/^([1-4]|[A-D])[.\-、\s]*/i,"").trim().toLowerCase();
+    const isCorrect = cleanSel === cleanCorr;
+
+    // 標示選項顏色
+    document.querySelectorAll(".fc-opt-btn").forEach(b => {
+        const cleanB = b.dataset.opt.replace(/^([1-4]|[A-D])[.\-、\s]*/i,"").trim().toLowerCase();
+        if (cleanB === cleanCorr) {
+            b.className = "fc-opt-btn w-full text-left border-2 border-green-400 bg-green-50 text-green-700 font-bold rounded-xl px-4 py-3 text-sm";
+        } else if (b === clickedBtn && !isCorrect) {
+            b.className = "fc-opt-btn w-full text-left border-2 border-red-300 bg-red-50 text-red-600 font-semibold rounded-xl px-4 py-3 text-sm";
+        } else {
+            b.className = "fc-opt-btn w-full text-left border border-gray-100 bg-gray-50 text-gray-400 rounded-xl px-4 py-3 text-sm";
+        }
+    });
+
+    // 延遲 500ms 後顯示背面（對錯結果）
+    setTimeout(() => {
+        hide("fc-front"); show("fc-back");
+
+        // 對錯橫幅
+        const banner = document.getElementById("fc-result-banner");
+        if (isCorrect) {
+            banner.textContent = "✅ 答對了！";
+            banner.className = "rounded-xl p-4 mb-4 text-center font-bold text-lg bg-green-50 border-2 border-green-300 text-green-700";
+        } else {
+            banner.textContent = "❌ 答錯了";
+            banner.className = "rounded-xl p-4 mb-4 text-center font-bold text-lg bg-red-50 border-2 border-red-300 text-red-600";
+        }
+
+        // 正確答案
+        document.getElementById("fc-answer").textContent = q.ans || "（無答案資料）";
+
+        // 解析
+        const expWrap = document.getElementById("fc-exp-wrap");
+        const expEl   = document.getElementById("fc-exp");
+        if (q.exp && q.exp !== "尚無解析") {
+            expEl.textContent = q.exp;
+            expWrap.classList.remove("hidden");
+        } else {
+            expWrap.classList.add("hidden");
+        }
+
+        // 自動記錄答對/答錯供 fcNext 使用
+        fcCurrentCard._lastCorrect = isCorrect;
+    }, 500);
+}
+
+// 「已掌握」或「再複習一次」
+function fcNext(markKnown) {
+    if (!fcCurrentCard) return;
+    const card = fcDeck.shift();
+    if (markKnown) fcKnown.push(card);
+    else           fcDeck.push(card); // 放回末尾
+    fcCurrentCard = null;
+    renderFlashcard();
+}
+
+// 相容舊呼叫
+function fcAnswer(knew) { fcNext(knew); }
+function flipCard() {}   // 新版不需要，保留避免報錯
+
+function showFlashcardDone() {
+    hide("flashcard-section");
+    show("flashcard-done-section");
+    document.getElementById("fc-done-msg").textContent =
+        `共 ${fcKnown.length} 張全部複習完成！`;
+}
+
+function restartFlashcard() {
+    hide("flashcard-done-section");
+    fcDeck  = shuffle([...fcKnown]);
+    fcKnown = [];
+    show("flashcard-section");
+    renderFlashcard();
+}
+
 function backToTopics() {
     hide("result-section");
+    hide("flashcard-section");
+    hide("flashcard-done-section");
+    hide("flashcard-loading-section");
     show("topic-section");
     window.scrollTo({ top:0, behavior:'smooth' });
 }
