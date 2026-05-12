@@ -94,6 +94,40 @@
         <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
     </section>
 
+    <!-- 班級完成度排行（入口頁） -->
+    <section id="ranking-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-8 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-800">🏅 班級完成度排行</h2>
+            <span id="ranking-pass-badge" class="text-xs bg-sky-100 text-sky-700 px-3 py-1 rounded-full font-semibold border border-sky-200"></span>
+        </div>
+        <div id="ranking-list" class="space-y-3"></div>
+        <!-- 個人完成度（點班級後展開） -->
+        <div id="ranking-student-view" class="hidden mt-4 border-t pt-4">
+            <div class="flex items-center gap-2 mb-3">
+                <button onclick="closeRankingStudentView()" class="text-gray-400 hover:text-gray-600 text-sm">← 返回</button>
+                <h3 id="ranking-class-title" class="font-bold text-gray-800"></h3>
+            </div>
+            <div id="ranking-student-list" class="space-y-2"></div>
+        </div>
+    </section>
+
+    <!-- ★ 我的完成度（登入後顯示） -->
+    <section id="my-completion-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-8 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-800">📊 我的完成度</h2>
+            <span id="my-completion-badge" class="text-xs bg-pink-100 text-pink-700 px-3 py-1 rounded-full font-semibold border border-pink-200"></span>
+        </div>
+        <!-- 整體進度條 -->
+        <div class="flex items-center gap-3 mb-5">
+            <div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div id="my-completion-bar" class="h-3 rounded-full transition-all duration-700 bg-sky-400" style="width:0%"></div>
+            </div>
+            <span id="my-completion-pct" class="text-sky-600 font-bold text-lg w-14 text-right">0%</span>
+        </div>
+        <!-- 各分類狀態 -->
+        <div id="my-completion-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </section>
+
     <!-- 單元選擇 -->
     <section id="topic-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-10">
         <div class="text-center mb-6">
@@ -335,6 +369,7 @@
                 <button class="tab-btn active px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 bg-white" onclick="switchTab('class',event)">🏫 班級總覽</button>
                 <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 bg-white" onclick="switchTab('question',event)">📋 題目難度分析</button>
                 <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 bg-white" onclick="switchTab('topic',event)">📚 單元統計</button>
+                <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 bg-white" onclick="switchTab('settings',event)">⚙️ 完成度設定</button>
             </div>
 
             <!-- Tab 1：班級總覽 -->
@@ -392,6 +427,54 @@
                 <div class="mb-6" style="max-height:320px;"><canvas id="topic-chart"></canvas></div>
                 <div id="topic-stats-list" class="space-y-3"></div>
             </div>
+
+            <!-- Tab 設定：完成度設定 -->
+            <div id="tab-settings" class="tab-content bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-2">⚙️ 班級完成度排行設定</h2>
+                <p class="text-sm text-gray-400 mb-6">設定後儲存，學生登入頁面的排行榜會即時更新。</p>
+
+                <!-- 達標分數 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">達標分數（完整測驗最高分 ≥ 此分數視為完成）</label>
+                    <div class="flex items-center gap-3">
+                        <input type="number" id="settings-pass-score" min="1" max="100" value="80"
+                            class="w-28 border border-gray-300 rounded-lg px-4 py-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-sky-300">
+                        <span class="text-gray-500 text-sm">分</span>
+                    </div>
+                </div>
+
+                <!-- 分類勾選 -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-semibold text-gray-700">納入完成度計算的分類</label>
+                        <div class="flex gap-2">
+                            <button onclick="settingsSelectAll(true)"  class="text-xs text-sky-600 hover:text-sky-800 underline">全選</button>
+                            <button onclick="settingsSelectAll(false)" class="text-xs text-gray-400 hover:text-gray-600 underline">全不選</button>
+                        </div>
+                    </div>
+                    <div id="settings-topic-list" class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1"></div>
+                </div>
+
+                <!-- 班級勾選 -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-semibold text-gray-700">顯示哪些班級的排行</label>
+                        <div class="flex gap-2">
+                            <span class="text-xs text-gray-400">（全選 = 顯示所有班級）</span>
+                            <button onclick="settingsSelectAllClasses(true)"  class="text-xs text-purple-600 hover:text-purple-800 underline">全選</button>
+                            <button onclick="settingsSelectAllClasses(false)" class="text-xs text-gray-400 hover:text-gray-600 underline">全不選</button>
+                        </div>
+                    </div>
+                    <div id="settings-class-list" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1"></div>
+                </div>
+
+                <!-- 儲存按鈕 -->
+                <button id="settings-save-btn" onclick="saveCompletionSettings()"
+                    class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-8 py-3 rounded-xl transition">
+                    💾 儲存設定
+                </button>
+                <p id="settings-save-status" class="text-sm mt-3 font-medium hidden"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -407,6 +490,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzeSGvkiCgYggXCb-mhRKDy
 let allQuestionsData   = [];
 let topicsData         = [];   // ★ 分類清單（doGet 回傳）
 let studentHashes      = [];   // ★ 從 GAS 載入的雜湊名單，本地比對用（不含原始學號姓名）
+let completionSettings = { passScore: 80, completionTopics: [], completionClasses: [] }; // ★ 完成度設定
+let allClassList       = [];   // ★ 所有班級清單（後台設定用）
 let studentName        = "";
 let studentId          = "";
 let currentSelectedTopic = "";
@@ -460,9 +545,18 @@ async function fetchQuestionBank() {
         // ★ 只儲存分類清單，題目內容待進入分類後再載入
         topicsData = result.topics || [];
 
+        // ★ 儲存完成度設定供入口頁排行使用
+        completionSettings = result.completionSettings || { passScore: 80, completionTopics: [], completionClasses: [] };
+        allClassList       = result.allClassList || [];
+
         hide("loading-section");
         show("login-section");
         document.getElementById("input-id").focus();
+
+        // ★ 排行不需登入，載入題庫後立即顯示
+        if (completionSettings.completionTopics?.length > 0) {
+            loadCompletionRanking();
+        }
     } catch (err) {
         document.getElementById("error-message").textContent = "連線失敗：" + err.message;
         hide("loading-section"); show("error-section");
@@ -499,6 +593,14 @@ function handleLogin() {
     hide("login-section");
     renderTopics();
     show("topic-section");
+    // 排行已在載入時顯示，登入後確保繼續顯示（若有設定）
+    if (completionSettings.completionTopics?.length > 0 && rankingData) {
+        show("ranking-section");
+    }
+    // ★ 登入後顯示個人完成度
+    if (completionSettings.completionTopics?.length > 0) {
+        loadMyCompletion();
+    }
 }
 
 // ══════════════════════════════════════════════
@@ -996,12 +1098,189 @@ function restartFlashcard() {
     renderFlashcard();
 }
 
+// ══════════════════════════════════════════════
+//  班級完成度排行
+// ══════════════════════════════════════════════
+
+// 姓名遮罩：中間字改為 O（2字→第1字遮，3字以上→中間字遮）
+function maskName(name) {
+    if (!name) return "";
+    const chars = [...name]; // 支援中文
+    if (chars.length <= 1) return name;
+    if (chars.length === 2) return chars[0] + "O";
+    // 3字以上：中間全遮
+    const mid = chars.slice(1, chars.length - 1).map(() => "O");
+    return chars[0] + mid.join("") + chars[chars.length - 1];
+}
+
+let rankingData = null; // 快取排行資料
+
+// ── 個人完成度 ────────────────────────────────
+async function loadMyCompletion() {
+    try {
+        const res = await postGAS({ action: "getMyCompletion", studentId });
+        if (res.status !== "ok") return;
+        renderMyCompletion(res);
+        show("my-completion-section");
+    } catch(e) {
+        console.warn("個人完成度載入失敗", e);
+    }
+}
+
+function renderMyCompletion(data) {
+    const { passScore, completionTopics, details } = data;
+    const passed  = details.filter(d => d.passed).length;
+    const total   = completionTopics.length;
+    const pct     = total > 0 ? Math.round((passed / total) * 100) : 0;
+    const barCls  = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-sky-400" : "bg-rose-400";
+
+    // 標題 badge
+    document.getElementById("my-completion-badge").textContent =
+        `達標：${passScore} 分`;
+
+    // 整體進度條
+    const bar = document.getElementById("my-completion-bar");
+    bar.style.width   = pct + "%";
+    bar.className     = `h-3 rounded-full transition-all duration-700 ${barCls}`;
+    document.getElementById("my-completion-pct").textContent = `${passed}/${total}`;
+
+    // 各分類卡片
+    document.getElementById("my-completion-list").innerHTML = details.map(d => {
+        const isPassed = d.passed;
+        const best     = d.best !== null ? d.best + " 分" : "尚未作答";
+        const cardCls  = isPassed
+            ? "border-green-200 bg-green-50"
+            : d.best !== null ? "border-yellow-200 bg-yellow-50" : "border-gray-100 bg-gray-50";
+        const iconCls  = isPassed ? "text-green-500" : d.best !== null ? "text-yellow-500" : "text-gray-300";
+        const icon     = isPassed ? "✅" : d.best !== null ? "⚠️" : "⭕";
+        const textCls  = isPassed ? "text-green-700" : d.best !== null ? "text-yellow-700" : "text-gray-400";
+        const hint     = isPassed
+            ? "已完成"
+            : d.best !== null ? `還差 ${passScore - d.best} 分達標` : "點下方按鈕開始練習";
+
+        return `<div class="border ${cardCls} rounded-xl p-3 flex items-center gap-3">
+            <span class="text-2xl shrink-0">${icon}</span>
+            <div class="flex-1 min-w-0">
+                <p class="font-semibold text-gray-800 text-sm truncate" title="${d.topic}">${d.topic}</p>
+                <p class="text-xs ${textCls} mt-0.5">${hint}　<span class="text-gray-400">最高：${best}</span></p>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+async function loadCompletionRanking() {
+    try {
+        const res = await postGAS({ action: "getCompletionRanking" });
+        if (res.status !== "ok") return;
+        rankingData = res;
+        renderRankingSection(res);
+        show("ranking-section");
+    } catch(e) {
+        console.warn("排行載入失敗", e);
+    }
+}
+
+function renderRankingSection(data) {
+    const { passScore, completionTopics, ranking } = data;
+    document.getElementById("ranking-pass-badge").textContent = `達標：${passScore} 分`;
+    document.getElementById("ranking-list").innerHTML = "";
+    document.getElementById("ranking-student-view").classList.add("hidden");
+
+    if (!ranking.length) {
+        document.getElementById("ranking-list").innerHTML =
+            '<p class="text-gray-400 text-center py-4 text-sm">尚無作答資料</p>';
+        return;
+    }
+
+    const medals = ["🥇","🥈","🥉"];
+    document.getElementById("ranking-list").innerHTML = ranking.map((cls, idx) => {
+        const pct    = cls.pct ?? 0;
+        const barCls = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-yellow-400" : "bg-red-400";
+        const tcls   = pct >= 80 ? "text-green-600" : pct >= 50 ? "text-yellow-600" : "text-red-500";
+        const medal  = medals[idx] || `${idx+1}.`;
+        return `<div class="student-row border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3"
+                     onclick="openRankingClassView('${cls.class}')">
+            <span class="text-xl shrink-0 w-8 text-center">${medal}</span>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-gray-800">${cls.class}</span>
+                    <span class="font-bold ${tcls}">${cls.avgCompleted} / ${completionTopics.length} 分類</span>
+                </div>
+                <div class="rate-bar w-full">
+                    <div class="rate-bar-fill ${barCls}" style="width:${pct}%"></div>
+                </div>
+                <div class="flex justify-between mt-1 text-xs text-gray-400">
+                    <span>${cls.studentCount} 位學生</span>
+                    <span>全部完成 ${cls.allDoneCount} 人</span>
+                </div>
+            </div>
+            <svg class="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>`;
+    }).join("");
+}
+
+function openRankingClassView(className) {
+    if (!rankingData) return;
+    const cls = rankingData.ranking.find(r => r.class === className);
+    if (!cls) return;
+
+    document.getElementById("ranking-list").classList.add("hidden");
+    const view = document.getElementById("ranking-student-view");
+    view.classList.remove("hidden");
+    document.getElementById("ranking-class-title").textContent = `${className} — 各學生完成狀況`;
+
+    const { passScore, completionTopics } = rankingData;
+
+    document.getElementById("ranking-student-list").innerHTML = cls.students.map(stu => {
+        const pct    = completionTopics.length > 0
+            ? Math.round((stu.completed / completionTopics.length) * 100) : 0;
+        const tcls   = pct >= 80 ? "text-green-600" : pct >= 50 ? "text-yellow-600" : "text-red-400";
+        const barCls = pct >= 80 ? "bg-green-400" : pct >= 50 ? "bg-yellow-400" : "bg-red-300";
+
+        // 各分類的完成狀況小標籤
+        const topicTags = (stu.details || []).map(d => {
+            const tagCls = d.passed
+                ? "bg-green-100 text-green-700 border-green-200"
+                : "bg-gray-100 text-gray-400 border-gray-200";
+            const score  = d.best !== null ? `${d.best}分` : "未作答";
+            return `<span class="inline-block text-xs px-2 py-0.5 rounded-full border ${tagCls} mr-1 mb-1"
+                title="${d.topic}：${score}">${d.passed ? "✓" : "✗"} ${d.topic.length > 8 ? d.topic.slice(0,8)+"…" : d.topic}</span>`;
+        }).join("");
+
+        return `<div class="border border-gray-100 rounded-xl p-3 bg-gray-50">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-gray-800">${maskName(stu.name)}</span>
+                <span class="font-bold ${tcls}">${stu.completed} / ${completionTopics.length}</span>
+            </div>
+            <div class="rate-bar mb-2">
+                <div class="rate-bar-fill ${barCls}" style="width:${pct}%"></div>
+            </div>
+            <div class="flex flex-wrap">${topicTags}</div>
+        </div>`;
+    }).join("");
+}
+
+function closeRankingStudentView() {
+    document.getElementById("ranking-student-view").classList.add("hidden");
+    document.getElementById("ranking-list").classList.remove("hidden");
+}
+
 function backToTopics() {
     hide("result-section");
     hide("flashcard-section");
     hide("flashcard-done-section");
     hide("flashcard-loading-section");
     show("topic-section");
+    // 已登入且有設定完成度 → 重新整理個人完成度（可能剛測完有更新）
+    if (studentId && completionSettings.completionTopics?.length > 0) {
+        loadMyCompletion();
+        show("my-completion-section");
+    }
+    if (completionSettings.completionTopics?.length > 0 && rankingData) {
+        show("ranking-section");
+    }
     window.scrollTo({ top:0, behavior:'smooth' });
 }
 
@@ -1501,11 +1780,77 @@ function renderTopicChart(tStats) {
     }).join("");
 }
 
+// ── 設定 Tab ──────────────────────────────────
+function renderSettingsTab(currentSettings) {
+    // 分數
+    document.getElementById("settings-pass-score").value = currentSettings?.passScore ?? 80;
+
+    // ── 分類勾選 ──
+    const allTopics     = teacherData?.topicStats?.map(t => t.topic) ||
+                          teacherData?.questionStats?.map(q => q.topic).filter((v,i,a)=>a.indexOf(v)===i) ||
+                          [];
+    const checkedTopics = new Set(currentSettings?.completionTopics || []);
+    document.getElementById("settings-topic-list").innerHTML = allTopics.length === 0
+        ? '<p class="text-gray-400 text-sm col-span-2">請先載入分析數據（切換至其他 Tab 後再回來）</p>'
+        : allTopics.map(topic => `
+            <label class="flex items-center gap-2 border border-gray-100 rounded-lg px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" class="settings-topic-cb w-4 h-4 rounded accent-sky-500"
+                    value="${topic}" ${checkedTopics.has(topic) ? "checked" : ""}>
+                <span class="text-sm text-gray-700">${topic}</span>
+            </label>`).join("");
+
+    // ── 班級勾選 ──
+    const checkedClasses = new Set(currentSettings?.completionClasses || []);
+    const classContainer = document.getElementById("settings-class-list");
+    if (classContainer) {
+        classContainer.innerHTML = allClassList.length === 0
+            ? '<p class="text-gray-400 text-sm col-span-2">尚未讀取到班級資料</p>'
+            : allClassList.map(cls => `
+                <label class="flex items-center gap-2 border border-gray-100 rounded-lg px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" class="settings-class-cb w-4 h-4 rounded accent-purple-500"
+                        value="${cls}" ${checkedClasses.size === 0 || checkedClasses.has(cls) ? "checked" : ""}>
+                    <span class="text-sm text-gray-700">${cls}</span>
+                </label>`).join("");
+    }
+}
+
+function settingsSelectAll(checked) {
+    document.querySelectorAll(".settings-topic-cb").forEach(cb => cb.checked = checked);
+}
+function settingsSelectAllClasses(checked) {
+    document.querySelectorAll(".settings-class-cb").forEach(cb => cb.checked = checked);
+}
+
+async function saveCompletionSettings() {
+    const passScore = parseInt(document.getElementById("settings-pass-score").value) || 80;
+    const topics    = [...document.querySelectorAll(".settings-topic-cb:checked")].map(cb => cb.value);
+    const classes   = [...document.querySelectorAll(".settings-class-cb:checked")].map(cb => cb.value);
+    const btn       = document.getElementById("settings-save-btn");
+    const status    = document.getElementById("settings-save-status");
+
+    btn.disabled = true; btn.textContent = "儲存中...";
+    try {
+        const res = await postGAS({ action: "saveSettings", passScore, completionTopics: topics, completionClasses: classes });
+        if (res.status !== "ok") throw new Error(res.message || "儲存失敗");
+        status.textContent  = "✓ 設定已儲存！學生下次登入時排行榜將更新。";
+        status.className    = "text-sm mt-3 font-medium text-green-600";
+        status.classList.remove("hidden");
+    } catch(e) {
+        status.textContent  = "儲存失敗：" + e.message;
+        status.className    = "text-sm mt-3 font-medium text-red-500";
+        status.classList.remove("hidden");
+    } finally {
+        btn.disabled = false; btn.textContent = "💾 儲存設定";
+    }
+}
+
 function switchTab(tab, event) {
     document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
     event.currentTarget.classList.add("active");
     document.getElementById("tab-"+tab).classList.add("active");
+    // ★ 切到設定Tab時渲染分類勾選
+    if (tab === "settings") renderSettingsTab(completionSettings);
 }
 
 // ══════════════════════════════════════════════
