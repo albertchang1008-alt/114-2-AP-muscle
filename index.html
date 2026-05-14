@@ -69,6 +69,23 @@
     </section>
 
     <!-- 學生登入 -->
+    <!-- 班級完成度排行（登入框上方，無需登入即可看到） -->
+    <section id="ranking-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-8 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-800">🏅 班級完成度排行</h2>
+            <span id="ranking-pass-badge" class="text-xs bg-sky-100 text-sky-700 px-3 py-1 rounded-full font-semibold border border-sky-200"></span>
+        </div>
+        <div id="ranking-list" class="space-y-3"></div>
+        <!-- 個人完成度（點班級後展開） -->
+        <div id="ranking-student-view" class="hidden mt-4 border-t pt-4">
+            <div class="flex items-center gap-2 mb-3">
+                <button onclick="closeRankingStudentView()" class="text-gray-400 hover:text-gray-600 text-sm">← 返回</button>
+                <h3 id="ranking-class-title" class="font-bold text-gray-800"></h3>
+            </div>
+            <div id="ranking-student-list" class="space-y-2"></div>
+        </div>
+    </section>
+
     <section id="login-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-10 mx-auto max-w-md">
         <h2 class="text-xl font-semibold mb-6 text-center text-gray-700">學生登入</h2>
         <div class="space-y-4">
@@ -92,23 +109,6 @@
             </button>
         </div>
         <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
-    </section>
-
-    <!-- 班級完成度排行（入口頁） -->
-    <section id="ranking-section" class="hidden bg-white rounded-2xl shadow-sm border border-pink-100 p-6 md:p-8 mb-4">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-gray-800">🏅 班級完成度排行</h2>
-            <span id="ranking-pass-badge" class="text-xs bg-sky-100 text-sky-700 px-3 py-1 rounded-full font-semibold border border-sky-200"></span>
-        </div>
-        <div id="ranking-list" class="space-y-3"></div>
-        <!-- 個人完成度（點班級後展開） -->
-        <div id="ranking-student-view" class="hidden mt-4 border-t pt-4">
-            <div class="flex items-center gap-2 mb-3">
-                <button onclick="closeRankingStudentView()" class="text-gray-400 hover:text-gray-600 text-sm">← 返回</button>
-                <h3 id="ranking-class-title" class="font-bold text-gray-800"></h3>
-            </div>
-            <div id="ranking-student-list" class="space-y-2"></div>
-        </div>
     </section>
 
     <!-- ★ 我的完成度（登入後顯示） -->
